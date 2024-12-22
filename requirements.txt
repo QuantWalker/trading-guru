@@ -1,0 +1,7 @@
+pydantic
+pydantic-settings
+
+httpx
+fastapi
+pytz
+numpy
