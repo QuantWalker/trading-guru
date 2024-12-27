@@ -18,9 +18,9 @@
   `httpx`
 
 - 關於時區庫
-  > 不使用 tzdata, 因為 windows 設備無法運行
+  > windows 設備須安裝 tzdata 以載入時區資料 (Linux 有自帶的時區資訊)
 
-  `pytz`
+  `tzdata + ZoneInfo.zoneinfo`
 
 - 關於宣告資料類型
   > pydantic 應該大家都會用, 就選他了, 而且用來載入環境變量也比較方便
@@ -35,7 +35,7 @@
 - 關於 dump to JSON 的方式
   > 由於使用 Decimal 類型, 在 dump 時若採用常見的 json.dumps(object, ensure_ascii=False) 會產生錯誤, 所幸 fastapi.encoder 提供了一個 jsonable_encoder 函數可以完美解決這個問題
   
-  `fastapi.encoder jsonable_encoder`
+  `fastapi.encoder.jsonable_encoder`
 
 - 關於 Configuration 文件類型
   

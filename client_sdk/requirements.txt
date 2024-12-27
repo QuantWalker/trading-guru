@@ -3,5 +3,5 @@ pydantic-settings
 
 httpx
 fastapi
-pytz
+tzdata
 numpy
