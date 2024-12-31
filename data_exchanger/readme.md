@@ -5,6 +5,16 @@
 > 舉例來說，台股一張是 1,000 股，因此當券商報量單位為"張"時，應轉換為股數 (張 * 1,000)，這樣此系統就能兼容美股、台灣零股、期貨、加密貨幣的交易場景
 
 ## 關於報送協議
+以下為使用到的報送協議整理表，詳細內文格式請見各項描述
+
+| Medium | Channel/Key Name | Description |
+| :----: | :---: | :---------- |
+| Redis Key/Value | Heartbeat_Market_{instance_id} | 行情 API 進程運行狀況 |
+| Redis Key/Value | Heartbeat_Trade_{instance_id} | 交易 API 進程運行狀況 |
+| Redis Stream    | OHLCs_{exchange}.{symbol}     | 傳送已閉合的 OHLC (1 分 OHLC) |
+| Redis Pub/Sub   | Depth_{exchange}.{symbol}     | 交易盤口資訊 |
+| Redis Pub/Sub   | Match_{exchange}.{symbol}     | 逐筆交易資訊 |
+| Redis Key/Value | OHLC_{exchange}.{symbol}      | 目前最新 OHLC (1 分 OHLC) |
 
 
 ### Heartbeat
@@ -17,6 +27,8 @@
 
 ```python
 from datetime import datetime
+
+# instance_id 為啟動參數，用於識別實例
 
 redis_key = f"Heartbeat_Market_{instance_id}"  # 考慮多個行情實例同時啟動，負責分散處理行情
 redis_value = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -66,8 +78,8 @@ approximate_max_length = True  # 使用約略長度修剪模式，獲得較好�
 redis_channel = f"Depth_{Exchange}.{Symbol}"
 message = json.dumps({
   "T": 1735553953,  # [decimal] Timestamp (seconds)，券商不一定會給秒以下的資訊
-  "A": {6014.25: 10, 6014.5: 87, 6014.75: 24, 6015: 266, 6015.25: 14}  # [OrderDict[decimal, decimal]] 賣盤報價/委託量
-  "B": {6013: 148, 6013.25: 12, 6013.5: 44, 6013.75: 69, 6014: 3}  # [OrderDict[decimal, decimal]] 買盤報價/委託量
+  "A": {6014.25: 10, 6014.5: 87, 6014.75: 24, 6015: 266, 6015.25: 14}  # [OrderDict[decimal, decimal]] 賣盤報價/委託量, Top 20 檔
+  "B": {6013: 148, 6013.25: 12, 6013.5: 44, 6013.75: 69, 6014: 3}  # [OrderDict[decimal, decimal]] 買盤報價/委託量, Top 20 檔
   "D": 17  # [decimal] 行情延遲 (milliseconds)，即行情品質，數值越小，品質越高
 })
 
