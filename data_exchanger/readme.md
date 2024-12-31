@@ -54,7 +54,7 @@ QuoteAPI 負責管理 Basic OHLC 的組裝及發送至 Redis Stream (僅發送�
 redis_stream_key = f"OHLCs_{Exchange}.{Symbol}"
 redis_stream_value = "OHLC"
 message = json.dumps({
-  "M": true,  # [bool] isMature，若 OHLC 是完整的為 True，若是中途才開始接收行情為 False (不成熟的 OHLC)
+  "M": True,  # [bool] isMature，若 OHLC 是完整的為 True，若是中途才開始接收行情為 False (不成熟的 OHLC)
   "T": 1735553960,  # [long] Timestamp (seconds)，為 OHLC 的完成時間，即每分鐘的 0 秒，因此開盤時段若為 8:45 - 13:45 時，首個完整 OHLC 的應為 08:46:00，最後一個完整 OHLC 應為 13:45:00
   "O": 6014.25,  # [decimal] 開盤價
   "H": 6015.75,  # [decimal] 最高價
@@ -102,7 +102,7 @@ QuoteAPI 負責接收並發送市場成交資訊，並且發送當前 OHLC 的�
 # 以下為 QuoteAPI 更新 Redis Key/Value 的資料範例及參數
 redis_key = f"OHLC_{Exchange}.{Symbol}"
 redis_value = json.dumps({
-  "M": true,  # [bool] isMature，若 OHLC 是完整接收時為 True，若是中途才開始接收行情為 False (不成熟的 OHLC)
+  "M": True,  # [bool] isMature，若 OHLC 是完整接收時為 True，若是中途才開始接收行情為 False (不成熟的 OHLC)
   "T": 1735553960,  # [long] Timestamp (seconds)，為此 OHLC 預計完成閉合的時間，必為 60 的倍數
   "O": 6014.25,  # [decimal] 開盤價
   "H": 6015.75,  # [decimal] 最高價
