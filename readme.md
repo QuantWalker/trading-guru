@@ -76,7 +76,7 @@
   - Redis 7
 
 - 本地存儲:
-  - PostgreSQL (with TimescaleDB)
+  - SQLite, InfluxDB
 
 - 行情/交易端 (依據券商決定運行環境): 
   - Windows: 元大 / 凱基 / 群益 
@@ -84,12 +84,12 @@
 
 ### 推薦佈署模式
 - All-in-one (以帳戶開立在 元大 / 凱基 / 群益的情境為例)
-  - 1 x Windows Server 2022 (2 vCPU, 4G RAM) 在其安裝 Redis 7, PostgreSQL 等組件並啟動行情/交易端進程後即可啟動策略端進程開始運行
+  - 1 x Windows Server 2022 (2 vCPU, 4G RAM) 在其安裝 Redis 7, SQLite, InfluxDB 等組件並啟動行情/交易端進程後即可啟動策略端進程開始運行
 
 - Cloud IaaS/Paas (以 AWS 及帳戶開立在 元大 / 凱基 / 群益為例)
-  - 1 x EC2 (Windows Server 2022 t3.small): 負責運行行情/交易端 
+  - 1 x EC2 (Windows Server 2022 t3.small): 負責運行行情/交易端, 並且搭載 SQLite, InfluxDB
   - 1 x ElastiCache (Redis 7.4): 負責中間通信
-  - 1 x ECS: 負責運行策略端 (可內含 PostgreSQL 或選擇其他 DB 方案)
+  - 1 x ECS: 負責運行策略端
 
 
 ## 平台功能
@@ -107,7 +107,7 @@
   > 行情及交易指令標準化，使 SDK 可通用與任意券商交換資訊
 
 - Forward Testing 可視化模組
-  > 用於檢視進出場點位執行狀況及各項績效統計指標
+  > 負責接收 Paper Trading 模式的訂單，並執行模擬搓合，以供後續可檢視進出場點位執行狀況及各項績效統計指標
 
 - 主要券商 API 行情/交易終端
   > 使用 C#, C++, Java, Python 等語言直接對券商, 加密貨幣交易所提供之 API 進行開發，並轉化為通用報文以便 SDK 調用 
