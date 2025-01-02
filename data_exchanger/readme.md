@@ -144,7 +144,7 @@ message = json.dumps({
 
 ```SDK (Producer) -> Redis Stream -> Trade API (Consumer)```
 
-```SDK -> SQLite```
+```SDK -> SQLite 2025-01-02T08:45:00.000000+0800```
 
 所有策略訂單發送均預期為限價，不接受市價發送訂單，若策略開發所需，可改用較劣勢價格 (買更貴，賣便宜) 發出以實現範圍限價效果
 
@@ -186,7 +186,7 @@ extended_property = {
 
 ```Trade API (Producer) -> Redis Stream -> SDK (Consumer)```
 
-```Trade API -> SQLite```
+```Trade API -> SQLite 2025-01-02T08:45:00.000000+0800```
 
 ```python
 redis_stream_key = f"OrderAck_{StrategyName}"
@@ -209,8 +209,8 @@ order_ack = json.dumps({
     "MV": "",  # [decimal] Matched Value, 已成交金額 (用於反推平均成交價，MV += 成交單量 * 實際成交價)
     "MP": "",  # [decimal] Matched Price, (十進位制) 平均成交價格
     "OS": "",  # [str] Literal["Pending", "Sent", "Partial", "Filled", "Killed", "Rejected"]，訂單最新狀態，若訂單部分成交後取消成功時，狀態仍然為 Killed (因為最終是停在撤單成功狀態)；活躍可被取消的訂單狀態為：Pending, Sent, Partial, 其他均為已成/撤訂單
-    "MT": "",  # [datetime | None] 訂單撤銷時間
-    "UT": "",  # [datetime] 訂單狀態更新時間
+    "MT": "",  # [decimal | None] Timestamp (seconds)， 訂單撤銷時間
+    "UT": "",  # [decimal] Timestamp (seconds)， 訂單狀態更新時間
     "EP": "",  # [dict] 擴展屬性，用於保存其他用於改單 / 撤單的附屬資訊
 })
 ```
@@ -223,7 +223,7 @@ order_ack = json.dumps({
 
 ```Trade API (Producer) -> Redis Stream -> SDK (Consumer)```
 
-```Trade API -> SQLite```
+```Trade API -> SQLite (SQLite 時間格式將改為 2025-01-02T08:45:00.000000+0800)```
 
 ```python
 redis_stream_key = f"Trade_{StrategyName}"
