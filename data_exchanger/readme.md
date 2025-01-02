@@ -144,7 +144,7 @@ message = json.dumps({
 
 ```SDK (Producer) -> Redis Stream -> Trade API (Consumer)```
 
-```SDK -> SQLite 2025-01-02T08:45:00.000000+0800```
+```SDK -> SQLite (SQLite 時間格式將改為 2025-01-02T08:45:00.000000+0800)```
 
 所有策略訂單發送均預期為限價，不接受市價發送訂單，若策略開發所需，可改用較劣勢價格 (買更貴，賣便宜) 發出以實現範圍限價效果
 
@@ -186,7 +186,7 @@ extended_property = {
 
 ```Trade API (Producer) -> Redis Stream -> SDK (Consumer)```
 
-```Trade API -> SQLite 2025-01-02T08:45:00.000000+0800```
+```Trade API -> SQLite (SQLite 時間格式將改為 2025-01-02T08:45:00.000000+0800)```
 
 ```python
 redis_stream_key = f"OrderAck_{StrategyName}"
