@@ -38,7 +38,7 @@ from datetime import datetime
 
 # 考慮同時啟動不同交易所或是多個 QuoteAPI 實例狀況，應設計 instance_id 做為啟動 QuoteAPI / TradeAPI 的參數，用於識別實例
 
-time_format = "%Y-%m-%d %H:%M:%S.%f%z"
+time_format = "%Y-%m-%dT%H:%M:%S.%f%z"  # 2025-01-02T08:45:00.000000+0800
 
 redis_key = f"Heartbeat_Market_{instance_id}"  # 考慮多個行情實例同時啟動，負責分散處理行情
 redis_value = datetime.now().strftime(time_format)
@@ -53,7 +53,9 @@ redis_value = datetime.now().strftime(time_format)
 
 發送途徑：
 
-```QuoteAPI (Producer) -> Redis Stream -> Client-SDK (Consumer) -> Strategy & TimescaleDB (Persistent)```
+```QuoteAPI (Producer) -> Redis Stream -> Client-SDK (Consumer) -> Strategy```
+
+```QuoteAPI -> InfluxDB```
 
 QuoteAPI 負責管理 Basic OHLC 的組裝及發送至 Redis Stream (僅發送完成的 Basic OHLC，正在生長中的 OHLC 由 SDK 運算及管理)，因此發送至 Stream 內的 Timestamp 必為 60 的倍數
 
@@ -102,7 +104,7 @@ message = json.dumps({
 
 發送途徑：
 
-```QuoteAPI (Match) -> Redis Pub/Sub```  (若希望保存 Tick 資料，可以訂閱此 Channel 並轉錄至 TimescaleDB)
+```QuoteAPI (Match) -> Redis Pub/Sub```  (若希望保存 Tick 資料，可以啟用一個獨立進程訂閱此 Channel 並轉錄至 InfluxDB)
 
 ```QuoteAPI (OHLC) -> Redis Key/Value```
 
@@ -138,12 +140,18 @@ message = json.dumps({
 
 > 訂單指令，由策略經 SDK 向下發送至 Redis Stream，並 upsert 至 SQLite 及建立委託紀錄 / 日誌至 InfluxDB
 
+發送途徑：
+
+```SDK (Producer) -> Redis Stream -> Trade API (Consumer)```
+
+```SDK -> SQLite```
+
 所有策略訂單發送均預期為限價，不接受市價發送訂單，若策略開發所需，可改用較劣勢價格 (買更貴，賣便宜) 發出以實現範圍限價效果
 
 ```python
 redis_stream_key = f"Order_{CounterAlias}"
 order = json.dumps({
-    "CT": "",  # [datetime] Create Time, 此處為指令發起時間
+    "CT": "",  # [decimal] Timestamp (seconds), 此處為指令發起時間
     "PID": "",  # [str] 指令 Private ID，為 SDK 產生以利後續響應時辨識，不可重複
     "OT": "",  # [str] Literal["NO", "CO"]，指令類型：新單 (New Order)、撤單 (Cancel Order)
     "SN": "",  # [str] 策略機 Alias，用於多策略時分發訂單響應流資訊
@@ -174,12 +182,18 @@ extended_property = {
 
 > 訂單響應，由 TradeAPI 向上發送 Redis Stream，並 upsert 至 SQLite 及更新委託紀錄並建立日誌至 InfluxDB
 
+發送途徑：
+
+```Trade API (Producer) -> Redis Stream -> SDK (Consumer)```
+
+```Trade API -> SQLite```
+
 ```python
 redis_stream_key = f"OrderAck_{StrategyName}"
 
 # 結構與 Order 部分相同，新增 TradeAPI 及券商側產生的資訊
 order_ack = json.dumps({
-    "CT": "",  # [datetime] Create Time, 此處為訂單建立時間 (因為只有仍在場上的訂單會有券商 Ack，其他應視為系統外部產生的訂單或是錯誤單號，應在 TradeAPI 層面直接拒止)
+    "CT": "",  # [decimal] Timestamp (seconds), 此處為訂單建立時間 (因為只有仍在場上的訂單會有券商 Ack，其他應視為系統外部產生的訂單或是錯誤單號，應在 TradeAPI 層面忽略並寫入 Warning Level Log)
     "PID": "",
     "RID": "",  # [str] 由 TradeAPI 產生的 Request ID，各家產生的機制略有不同，由此映射由異步途徑返回的訂單紀錄
     "SN": "",
@@ -205,11 +219,17 @@ order_ack = json.dumps({
 
 > 訂單逐筆成交回報，由 TradeAPI 向上發送 Redis Stream，並 upsert 至 SQLite 及更新委託紀錄並建立日誌至 InfluxDB
 
+發送途徑：
+
+```Trade API (Producer) -> Redis Stream -> SDK (Consumer)```
+
+```Trade API -> SQLite```
+
 ```python
 redis_stream_key = f"Trade_{StrategyName}"
 
 trade = json.dumps({
-    "CT": "",  # [datetime] Create Time, 此處為成交時間
+    "CT": "",  # [decimal] Timestamp (seconds), 此處為成交時間
     "PID": "",
     "SN": "",
     "E": "",
